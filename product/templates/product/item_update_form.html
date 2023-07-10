@@ -1,0 +1,23 @@
+{% extends 'product/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}
+    Update Post - Item
+{% endblock %}
+
+{% block main_area %}
+    <h1>Update a New Post</h1>
+    <hr/>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+            {{form | crispy}}
+            <div>
+                <label for="id_tags">Tags:</label>
+                <input id="id_tags type=text" name="tags_str" value="{{tags_str_default}}"
+                    class="textinput textInput form-control">
+            </div>
+      <button type="submit" class="btn btn-primary float-right">Submit</button>
+    </form>
+
+{% endblock %}

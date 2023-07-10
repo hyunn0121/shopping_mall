@@ -1,0 +1,160 @@
+{% extends 'product/base.html' %} <!--base.html에 있는 내용이 그대로 복사되어서 여기로 오게된다는 것 -->
+{% load crispy_forms_tags %}
+
+{% block head_title %}
+    Item - {{item.title}}
+{% endblock %}
+
+{% block main_area %}
+
+                    <!-- Post content-->
+                    <div id="post-area">
+                        <!-- Post header-->
+                        <header class="mb-4">
+                            <!-- Post title-->
+                            <h1 class="fw-bolder mb-1">{{item.title}}</h1> <!-- 타이틀(제목) : Welcome to Blog Post! + 필터링을 lower(소문자)로 변경 -->
+                            {% if item.price %}
+                            <h5 class="text-muted">{{item.price}}원 - {{item.volume}} </h5>
+                            {% endif %}
+                            <!-- Post meta content-->
+                            <div class="text-muted fst-italic mb-2">by {{item.manufacturer}}</div> <!-- 현재시간 설정 = .created_at + | date 필터링 사용// January 1, 2022 -->
+                            <!-- Post categories--> <!-- 뱃지 형태 -->
+                            {% if item.category %}
+                            <a class="badge bg-secondary text-decoration-none link-light" href="{{item.category.get_absolute_url}}"> <!-- post라는 category가 가지고 있는 get_absolute를  출력해라 -->
+                                {{item.category}}</a>
+                            {% else %}
+                            <a class="badge bg-secondary text-decoration-none link-light" href="/product/category/no_category/">미분류</a>
+                            {% endif %}
+
+                        </header>
+
+                        {% if user.is_authenticated %}
+                            {% if user.is_superuser or user.is_staff %}
+                                <a class="btn btn-info float-right" href="/product/update_post/{{item.pk}}/" role="button">
+                                    <i class="fas fa-pen"> Edit Post</i>
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                        <!-- Preview image figure-->
+                        <figure class="mb-4">
+                            {% if item.head_image %}
+                            <img class="img-fluid rounded" src="{{item.head_image.url}}" alt="{{item.title}}의 head_image" />
+                            {% else %}
+                            <img class="img-fluid rounded" src="http://picsum.photos/seed/{{post.pk}}/800/200" alt="random image" /> <!-- post_list.html과의 차이는 p.pk와 post.pk로 다르다는 것 -->
+                            {% endif %}
+                        </figure>
+                        <!-- Post content-->
+                        <section class="mb-5">
+                            <p class="fs-5 mb-4">{{item.content}}</p> <!-- 포스트 내용 위치 -->
+
+                            {% if item.tags.exists %} <!-- tag 출력 -->
+                                <i class="fas fa-tag"></i>
+                                {% for t in item.tags.iterator %}
+                                    <span class="badge badge-pill badge-light">
+                                        <a href="{{t.get_absolute_url}}"> <!-- tag에서는 for문을 사용해서 t 변수로 받고 있기 때문에 여기서는 t를 써야함 !! -->
+                                            {{t}}
+                                        </a>
+                                    </span>  <!-- 위의 변수 t로 받은 tags를 출력 -->
+                                {% endfor %}
+                            {% endif %}
+                        </section>
+                    </div>
+
+                   <!-- Comments section--> <!-- 댓글 -->
+                    <div id="comment-area" class="mb-5">
+                        <div class="card bg-light">
+                            <div class="card-body">
+
+                                <!-- Comment form-->
+                                <div class="card= my-4">
+                                    <h5 class="card-header">Leave a Comment </h5>
+                                    <div class="card-body">
+                                    <!-- post 창 밑에서 댓글을 입력할 수 있는 창 -->
+                                    {% if user.is_authenticated %}
+                                    <form class="mb-4" id="comment-form" method="post" action="{{item.get_absolute_url}}new_comment/">
+                                        {% csrf_token %}  <!-- 외부로부터 침입을 방지하기 위한 보안 토큰 -->
+                                        <div class="form-group">
+                                            <textarea class="form-control" rows="3"></textarea>
+<!--                                            {{ comment_form | crispy }}-->
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </form>
+
+                                    {% else %}
+                                        <a role="button" class="btn btn-dark btn-block btn-sm" href="#"
+                                            data-toggle="modal" data-target="#loginModal"> <!-- navbar.html에서 만들어놓은 modal창을 id를 이용해서 사용-->
+                                            Log in and Leave a comment
+                                        </a>
+                                    {% endif %}
+                                    </div>
+                                </div>
+
+
+                                {% if item.comment_set.exists %}
+                                {% for comment in item.comment_set.iterator %}
+                                <!-- Single comment-->
+                                <div class="media d-flex" id="comment-{{comment.pk}}">
+                                   <img class="rounded-circle mr-3" src="{{comment.get_avatar_url}}" alt="{{comment.author}}" width="60px"/>
+
+                                    <div class="media-body ms-3">
+                                        {% if user.is_authenticated and comment.author == user %}
+                                        <div class="float-right">
+                                            <a role="button" class="btn btn-sm btn-info float-right"
+                                               href="/product/update_comment/{{comment.pk}}/">
+                                                Edit
+                                            </a>
+                                            <a role="button" class="btn btn-sm btn-danger float-right"
+                                               data-toggle = "modal" data-target="#deleteModal-{{comment.pk}}"
+                                               href="#">
+                                                Delete
+                                            </a>
+                                        </div>
+
+                                        <!-- Modal 창 -->
+  <div class="modal fade" id="deleteModal-{{comment.pk}}" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel3">Are you sure?</h5>\
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+            <del>{{comment | linebreaks}}</del>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <a role="button" class="btn btn-secondary"
+            href="/product/delete_comment/{{comment.pk}}/">
+              Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+                                        {% endif %}
+
+                                        <div class="fw-bold">
+                                            {{comment.author.username}}
+                                            <small class="text_muted">{{comment.created_at}}</small>
+                                        </div>
+                                        <p>{{comment.content | linebreaks}}</p>
+
+                                        {% if comment.created_at != comment.modified_at %}
+                                            <p class="text-muted float-right">
+                                                <small>Updated : {{comment.modified_at}}</small>
+                                            </p>
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'product/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}
+    Edit Comment - Item
+{% endblock %}
+
+{% block main_area %}
+  <h1>Edit Comment</h1>
+  <hr/>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+      {{form | crispy}}  <!-- views에서 정의한 필드명을 입력할 수 있는 form이 생성되는 듯?  -->
+
+    <button type="submit" class="btn btn-primary float-right">Submit</button>
+  </form>
+{% endblock %}
